@@ -88,7 +88,7 @@ public:
 
     typedef std::tuple<typename std::decay<Enumerator>::type::out_type...> out_type;
 
-    Combinator(typename std::decay<Enumerator>::type &... enums) :
+    Combinator(Enumerator &... enums) :
             enumerators(std::make_tuple(std::move(enums)...)){}
 
     bool finished() {
@@ -154,5 +154,10 @@ private:
         return std::move(std::make_tuple(std::get<indexes>(enumerators).get()...));
     }
 };
+
+template <typename ...Enumerator>
+Combinator<Enumerator...> make_combinator(Enumerator &... enums) {
+    return Combinator<Enumerator...>(enums...);
+}
 
 #endif //COMBINATOR_H

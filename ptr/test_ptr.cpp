@@ -23,7 +23,7 @@ void module_1_init(Domain &d) {
              return CALL(and_circuit, a1, a2)
                  && CALL(and_circuit, a3, a4)
                  && CALL(and_circuit, a5, a6)
-                 && !CALL(not_circuit, a7)
+                 && CALL(not_circuit, a7)
                  && a8.value >= R1 && a9.value >= R2 && a10.value >= R3;
          )
     );
@@ -90,10 +90,8 @@ int main() {
     RangeEnumerator<int, 1, R2, 1> x9;
     RangeEnumerator<int, 1, R3, 1> x10;
     Domain::Variable v1, v2, v3, v4, v5, v6, v7, v8, v9, v10;
-    Combinator<bool_enum, bool_enum, bool_enum, bool_enum, bool_enum,
-               bool_enum, bool_enum, RangeEnumerator<int, 1, R1, 1>,
-               RangeEnumerator<int, 1, R2, 1>, RangeEnumerator<int, 1, R3, 1>>
-               comb(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10);
+
+    auto comb = make_combinator(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10);
 
     Domain::Function *some_circuit = d.functions["some_circuit"].get();
     bool found;
