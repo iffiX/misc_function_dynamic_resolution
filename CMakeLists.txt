@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(untitled)
 set(CMAKE_CXX_STANDARD 14)
-#set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_CXX_FLAGS "-O3")
 include_directories(./)
 include_directories(./lib/)
 include_directories(./lib/fmt/include)

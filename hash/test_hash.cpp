@@ -20,9 +20,9 @@ void module_1_init(Domain &d) {
          ARG(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10), \
          BODY(
              return CALL(and_circuit, a1, a2)
-                 && CALL(or_circuit, a3, a4)
-                 && CALL(xor_circuit, a5, a6)
-                 && CALL(not_circuit, a7)
+                 && CALL(and_circuit, a3, a4)
+                 && CALL(and_circuit, a5, a6)
+                 && !CALL(not_circuit, a7)
                  && a8.value >= R1 && a9.value >= R2 && a10.value >= R3;
          )
     );
@@ -87,31 +87,34 @@ int main() {
                bool_enum, bool_enum, RangeEnumerator<int, 1, R1, 1>,
                RangeEnumerator<int, 1, R2, 1>, RangeEnumerator<int, 1, R3, 1>> comb(
                        x1, x2, x3, x4, x5, x6, x7, x8, x9, x10);
+    bool found;
 
-    for (int i=0; i<1; i++) {
-        while (!comb.finished()) {
-            auto c = std::move(comb.get());
-            /// a single satisfaction search step (worst case, no heuristic, all combinations must be enumerated
-            v1.value = std::get<0>(c);
-            v2.value = std::get<1>(c);
-            v3.value = std::get<2>(c);
-            v4.value = std::get<3>(c);
-            v5.value = std::get<4>(c);
-            v6.value = std::get<5>(c);
-            v7.value = std::get<6>(c);
-            v8.value = std::get<7>(c);
-            v9.value = std::get<8>(c);
-            v10.value = std::get<9>(c);
 
-            if (d.call("some_circuit", v1, v2, v3, v4, v5, v6, v7, v8, v9, v10)) {
-                fmt::print("found: {}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n",
-                           v1.value, v2.value, v3.value, v4.value, v5.value,
-                           v6.value, v7.value, v8.value, v9.value, v10.value);
-                break;
-            }
-            else
-                comb.next();
+    found = false;
+    while (!comb.finished()) {
+        auto c = std::move(comb.get());
+        /// a single satisfaction search step (worst case, no heuristic, all combinations must be enumerated
+        v1.value = std::get<0>(c);
+        v2.value = std::get<1>(c);
+        v3.value = std::get<2>(c);
+        v4.value = std::get<3>(c);
+        v5.value = std::get<4>(c);
+        v6.value = std::get<5>(c);
+        v7.value = std::get<6>(c);
+        v8.value = std::get<7>(c);
+        v9.value = std::get<8>(c);
+        v10.value = std::get<9>(c);
+
+        if (d.call("some_circuit", v1, v2, v3, v4, v5, v6, v7, v8, v9, v10)) {
+            found = true;
+            break;
         }
-        comb.reset();
+        else
+            comb.next();
+    }
+    if (found) {
+        fmt::print("found: {}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n",
+                   v1.value, v2.value, v3.value, v4.value, v5.value,
+                   v6.value, v7.value, v8.value, v9.value, v10.value);
     }
 }

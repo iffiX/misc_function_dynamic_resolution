@@ -29,8 +29,8 @@ Benchmark: 1.28e8 possible combinations for a mixed boolean & numeric SAT proble
 Platform: i7 6700HQ, single thread
 
 ```
-cmake-build-debug/test_ptr  0.70s user 0.00s system 99% cpu 0.697 total
-cmake-build-debug/test_hash  4.24s user 0.00s system 99% cpu 4.241 total
+cmake-build-debug/test_ptr  1.63s user 0.01s system 99% cpu 1.641 total
+cmake-build-debug/test_hash  10.80s user 0.00s system 99% cpu 10.803 total
 ```
 
 Hotspot & function runtime from perf:

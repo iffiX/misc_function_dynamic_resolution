@@ -55,14 +55,17 @@ public:
 
         template <typename Var, typename ...VarPack>
         bool call(Var && first_arg, VarPack && ... remain_args) {
+            size_t recv_num = sizeof...(remain_args) + 1;
+
+            if (recv_num != arg_pack.size())
+                throw std::runtime_error("Incorrect number of arguments");
+
             collectArgs(0, first_arg, remain_args...);
             return operator()();
         }
 
         template <typename Var, typename ...VarPack>
         void collectArgs(size_t idx, Var && next_arg, VarPack && ... remain_args) {
-            if (idx >= arg_pack.size())
-                throw std::runtime_error("Too many arguments to unpack");
             *arg_pack[idx] = next_arg;
             collectArgs(idx + 1, remain_args...);
         }

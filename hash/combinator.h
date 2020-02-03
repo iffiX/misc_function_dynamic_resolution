@@ -30,12 +30,13 @@ private:
 
 template <typename... T>
 constexpr auto make_array(T&&... values) ->
-    std::array<typename std::decay<typename std::common_type<T...>::type>::type,
+std::array<typename std::decay<typename std::common_type<T...>::type>::type,
         sizeof...(T)> {
     return std::array<
             typename std::decay<typename std::common_type<T...>::type>::type,
             sizeof...(T)>{std::forward<T>(values)...};
 }
+
 
 template <typename Value, size_t N>
 class ArrayEnumerator {
@@ -68,93 +69,89 @@ private:
     std::array<typename std::decay<Value>::type, N> _data;
 };
 
-template <typename E1, typename E2, typename E3, typename E4, typename E5,
-          typename E6, typename E7, typename E8, typename E9, typename E10>
+namespace Helper
+{
+    template<size_t... Is>
+    struct Seq { };
+
+    template<size_t N, size_t... Is>
+    struct GenSeq : GenSeq<N - 1, N - 1, Is...> { };
+
+    template<size_t... Is>
+    struct GenSeq<0, Is...> : Seq<Is...> { };
+}
+
+template <typename ...Enumerator>
 class Combinator {
 public:
-    E1 e1; E2 e2; E3 e3; E4 e4; E5 e5;
-    E6 e6; E7 e7; E8 e8; E9 e9; E10 e10;
+    std::tuple<typename std::decay<Enumerator>::type...> enumerators;
 
-    typedef std::tuple<
-            typename E1::out_type, typename E2::out_type, typename E3::out_type,
-            typename E4::out_type, typename E5::out_type, typename E6::out_type,
-            typename E7::out_type, typename E8::out_type, typename E9::out_type,
-            typename E10::out_type> out_type;
+    typedef std::tuple<typename std::decay<Enumerator>::type::out_type...> out_type;
 
-    Combinator() = delete;
-    Combinator(E1 &e1, E2 &e2, E3 &e3, E4 &e4, E5 &e5,
-               E6 &e6, E7 &e7, E8 &e8, E9 &e9, E10 &e10) :
-               e1(e1), e2(e2), e3(e3), e4(e4), e5(e5), e6(e6), e7(e7), e8(e8), e9(e9), e10(e10) {}
+    Combinator(typename std::decay<Enumerator>::type &... enums) :
+            enumerators(std::make_tuple(std::move(enums)...)){}
 
     bool finished() {
-        return e1.finished() && e2.finished() && e3.finished() && e4.finished() && e5.finished()
-               && e6.finished() && e7.finished() && e8.finished() && e9.finished() && e10.finished();
+        return _enumFinished<sizeof...(Enumerator)-1>();
     }
 
     void reset() {
-        e1.reset(); e2.reset(); e3.reset(); e4.reset(); e5.reset();
-        e6.reset(); e7.reset(); e8.reset(); e9.reset(); e10.reset();
+        _enumReset<sizeof...(Enumerator)-1>();
     }
 
     void next() {
-        out_type result;
-//        if (finished())
-//            return;
-        if (e10.finished()) {
-            e10.reset();
-            if (e9.finished()) {
-                e9.reset();
-                if (e8.finished()) {
-                    e8.reset();
-                    if (e7.finished()) {
-                        e7.reset();
-                        if (e6.finished()) {
-                            e6.reset();
-                            if (e5.finished()) {
-                                e5.reset();
-                                if (e4.finished()) {
-                                    e4.next();
-                                    if (e3.finished()) {
-                                        e3.reset();
-                                        if (e2.finished()) {
-                                            e2.reset();
-                                            if (e1.finished()) {
-                                                e1.reset();
-                                            }
-                                            else
-                                                e1.next();
-                                        }
-                                        else
-                                            e2.next();
-                                    }
-                                    else
-                                        e3.next();
-                                }
-                                else
-                                    e4.next();
-                            }
-                            else
-                                e5.next();
-                        }
-                        else
-                            e6.next();
-                    }
-                    else
-                        e7.next();
-                }
-                else
-                    e8.next();
-            }
-            else
-                e9.next();
-        }
-        else
-            e10.next();
+        _enumNext<sizeof...(Enumerator)-1>();
     }
 
     out_type get() {
-        return std::make_tuple(e1.get(), e2.get(), e3.get(), e4.get(), e5.get(),
-                               e6.get(), e7.get(), e8.get(), e9.get(), e10.get());
+        return std::move(_enumGetForEach(Helper::GenSeq<sizeof...(Enumerator)>()));
+    }
+
+private:
+    template <size_t idx, typename std::enable_if<(idx > 0), int>::type = 0>
+    bool _enumFinished() {
+        return std::get<idx>(enumerators).finished() && _enumFinished<idx-1>();
+    }
+
+    template <size_t idx, typename std::enable_if<idx == 0, int>::type = 0>
+    bool _enumFinished(){
+        return std::get<idx>(enumerators).finished();
+    }
+
+    template <size_t idx, typename std::enable_if<(idx > 0), int>::type = 0>
+    bool _enumReset() {
+        std::get<idx>(enumerators).reset();
+        _enumReset<idx-1>();
+    }
+
+    template <size_t idx, typename std::enable_if<idx == 0, int>::type = 0>
+    bool _enumReset(){
+        std::get<idx>(enumerators).reset();
+    }
+
+    template <size_t idx, typename std::enable_if<(idx > 0), int>::type = 0>
+    bool _enumNext() {
+        if (std::get<idx>(enumerators).finished()) {
+            std::get<idx>(enumerators).reset();
+            _enumNext<idx-1>();
+        }
+        else
+            std::get<idx>(enumerators).next();
+    }
+
+    template <size_t idx, typename std::enable_if<idx == 0, int>::type = 0>
+    bool _enumNext(){
+        if (std::get<idx>(enumerators).finished()) {
+            std::get<idx>(enumerators).reset();
+        }
+        else
+            std::get<idx>(enumerators).next();
+    }
+
+    template <size_t ...indexes>
+    out_type _enumGetForEach(Helper::Seq<indexes...>)
+    {
+        return std::move(std::make_tuple(std::get<indexes>(enumerators).get()...));
     }
 };
 
